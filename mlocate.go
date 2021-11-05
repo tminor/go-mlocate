@@ -62,7 +62,7 @@ func (fe *FileEntry) Type() (string, error) {
 func parseHeader(dbBytes []byte) Header {
 	return Header{
 		MagicNumber:            string(dbBytes[:8]),
-		ConfigurationBlockSize: binary.BigEndian.Uint32(dbBytes[8:12]),
+		ConfigurationBlockSize: binary.BigEndian.Uint32(dbBytes[8:13]),
 		FileFormatVersion:      uint8(dbBytes[12]),
 		RequireVisibility:      uint8(dbBytes[13]),
 		DatabasePath:           "/",
