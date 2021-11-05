@@ -3,6 +3,8 @@ package mlocate
 import (
 	"encoding/binary"
 	"errors"
+	"reflect"
+	"strings"
 )
 
 const (
