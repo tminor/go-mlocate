@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	null = "\000"
+	null = "\x00"
 	magicNum = null + "mlocate"
 )
 
