@@ -63,6 +63,6 @@ func Test_New(t *testing.T) {
 	got := New(testDBBytes)
 
 	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
-		t.Errorf("NewCsvStats() mismatch (-want +got):\n%s", diff)
+		t.Errorf("New() mismatch (-want +got):\n%s", diff)
 	}
 }
