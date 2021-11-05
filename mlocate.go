@@ -32,8 +32,8 @@ type DB struct {
 }
 
 type DirEntry struct {
-	DirTimeSeconds int64       // Maximum of st_ctime and st_mtime in seconds
-	DirTimeNanos   int32       // Nanosecond part of maximum of st_ctime and st_mtime
+	DirTimeSeconds uint64      // Maximum of st_ctime and st_mtime in seconds
+	DirTimeNanos   uint32      // Nanosecond part of maximum of st_ctime and st_mtime
 	PathName       string      // Path name of the directory
 	Files          []FileEntry // Sequence of file entries constituting the directory's contents
 }
