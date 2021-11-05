@@ -49,7 +49,16 @@ func mockDB() *DB {
 	}
 }
 
-func TestNew(t *testing.T) {
+func Test_parseHeader(t *testing.T) {
+	want := mockDB().Header
+	got := parseHeader(testDBBytes)
+
+	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+		t.Errorf("parseHeader() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func Test_New(t *testing.T) {
 	want := mockDB()
 	got := New(testDBBytes)
 
