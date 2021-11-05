@@ -15,7 +15,6 @@ type Header struct {
 	ConfigurationBlockSize uint32 // The size of the configuration block
 	FileFormatVersion      uint8  // Number indicating file version
 	RequireVisibility      uint8  // Whether to check user permissions before reporting results
-	padding                []byte // 2 bytes of padding
 	DatabasePath           string // Path name of the root of the database
 }
 
@@ -35,7 +34,6 @@ type DB struct {
 type DirEntry struct {
 	DirTimeSeconds int64       // Maximum of st_ctime and st_mtime in seconds
 	DirTimeNanos   int32       // Nanosecond part of maximum of st_ctime and st_mtime
-	padding        []byte
 	PathName       string      // Path name of the directory
 	Files          []FileEntry // Sequence of file entries constituting the directory's contents
 }

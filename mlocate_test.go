@@ -18,7 +18,6 @@ func mockDB() *DB {
 		ConfigurationBlockSize: 78,
 		FileFormatVersion:      0,
 		RequireVisibility:      1,
-		padding:                []byte{0, 0},
 		DatabasePath:           "/",
 	}
 
@@ -33,7 +32,6 @@ func mockDB() *DB {
 		{
 			DirTimeSeconds: 1474796256,
 			DirTimeNanos:   123962899,
-			padding:        []byte{0, 0, 0, 0},
 			PathName:       "/",
 			Files:          []FileEntry{
 				{_type: 0, Name:  "bin"},
