@@ -69,6 +69,42 @@ func parseHeader(dbBytes []byte) Header {
 	}
 }
 
+func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32) ConfigurationBlock {
+	configMap := make(map[string][]string)
+
+	config := strings.Split(string(dbBytes[startIndex:startIndex + blockSize]), "\x00\x00")
+
+	for i := 0; i < len(config); i++ {
+		split := strings.Split(config[i], "\x00")
+		varName := split[0]
+		varVals := split[1:]
+
+		configMap[varName] = varVals
+	}
+
+	ret := &ConfigurationBlock{}
+
+	ct := reflect.TypeOf(*ret)
+
+	for i := 0; i < ct.NumField(); i++ {
+		field := ct.Field(i)
+		varName := field.Tag.Get("param")
+
+		switch varName {
+		case "prune_bind_mounts":
+			ret.PruneBindMounts = configMap[varName]
+		case "prunefs":
+			ret.PruneFS = configMap[varName]
+		case "prunenames":
+			ret.PruneNames = configMap[varName]
+		case "prunepaths":
+			ret.PrunePaths = configMap[varName]
+		}
+	}
+
+	return *ret
+}
+
 func New(db ...[]byte) DB {
 	ret := DB{}
 
