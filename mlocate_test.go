@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	testDB = []byte("\x00mlocate\x00\x00\x0B\x81\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00\x00\x00\x00\x00\x57\xE7\x9A\xE0\x07c\x86\x13\x00\x00\x00\x00/\x00\x00bin\x00\x01boot\x02\x00")
-	cmpOpts = cmpopts.IgnoreUnexported(Header{}, DirEntry{})
+	testDBBytes     = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00\x00\x00\x00\x00\x57\xE7\x9A\xE0\x07c\x86\x13\x00\x00\x00\x00/\x00\x00bin\x00\x01boot\x02\x00")
+	cmpOpts         = cmpopts.IgnoreUnexported(Header{}, DirEntry{})
 )
 
 func mockDB() *DB {
@@ -51,7 +51,7 @@ func mockDB() *DB {
 
 func TestNew(t *testing.T) {
 	want := mockDB()
-	got := New(testDB)
+	got := New(testDBBytes)
 
 	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
 		t.Errorf("NewCsvStats() mismatch (-want +got):\n%s", diff)
