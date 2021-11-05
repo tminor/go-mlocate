@@ -19,10 +19,10 @@ type Header struct {
 }
 
 type ConfigurationBlock struct {
-	PruneBindMounts []string `raw:"prune_bind_mounts"` // A  single  entry,  the  value of PRUNE_BIND_MOUNTS; one of the strings 0 or 1
-	PruneFS         []string `raw:"prunefs"`           // The value of PRUNEFS, each entry is converted to uppercase
-	PruneNames      []string `raw:"prunenames"`
-	PrunePaths      []string `raw:"prunepaths"`        // The value of PRUNEPATHS
+	PruneBindMounts []string `param:"prune_bind_mounts"` // A  single  entry,  the  value of PRUNE_BIND_MOUNTS; one of the strings 0 or 1
+	PruneFS         []string `param:"prunefs"`           // The value of PRUNEFS, each entry is converted to uppercase
+	PruneNames      []string `param:"prunenames"`
+	PrunePaths      []string `param:"prunepaths"`        // The value of PRUNEPATHS
 }
 
 type DB struct {
