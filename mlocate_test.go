@@ -56,6 +56,17 @@ func Test_parseHeader(t *testing.T) {
 	}
 }
 
+func Test_parseConfigurationBlock(t *testing.T) {
+	header := parseHeader(testDBBytes)
+
+	want := mockDB().ConfigurationBlock
+	got := parseConfigurationBlock(testDBBytes, header.ConfigurationBlockSize, 16 + uint32(len(header.DatabasePath)) + 1)
+
+	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+		t.Errorf("parseConfigurationBlock() mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func Test_New(t *testing.T) {
 	want := mockDB()
 	got := New(testDBBytes)
