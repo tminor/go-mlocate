@@ -12,7 +12,7 @@ var (
 	cmpOpts         = cmpopts.IgnoreUnexported(Header{}, DirEntry{}, FileEntry{})
 )
 
-func mockDB() *DB {
+func mockDB() DB {
 	header := Header{
 		MagicNumber:            magicNum,
 		ConfigurationBlockSize: 78,
@@ -40,7 +40,7 @@ func mockDB() *DB {
 		},
 	}
 
-	return &DB{
+	return DB{
 		Header:             header,
 		ConfigurationBlock: configuration,
 		Directories:        directories,
