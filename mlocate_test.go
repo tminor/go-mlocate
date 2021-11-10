@@ -35,7 +35,7 @@ func mockDB() *DB {
 			PathName:       "/",
 			Files:          []FileEntry{
 				{_type: 0, Name:  "bin"},
-				{_type: 1, Name:  "etc"},
+				{_type: 1, Name:  "boot"},
 			},
 		},
 	}
