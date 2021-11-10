@@ -80,7 +80,7 @@ func Test_parseDirectories(t *testing.T) {
 
 func Test_New(t *testing.T) {
 	want := mockDB()
-	got := New(testDBBytes)
+	got := New(testDBBytes...)
 
 	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
 		t.Errorf("New() mismatch (-want +got):\n%s", diff)
