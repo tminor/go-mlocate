@@ -166,7 +166,7 @@ func parseParts(dbBytes []byte) DB {
 	ret := DB{}
 
 	ret.Header = parseHeader(dbBytes)
-	ret.ConfigurationBlock = parseConfigurationBlock(dbBytes, ret.Header.ConfigurationBlockSize, 15 + uint32(len(ret.Header.DatabasePath)))
+	ret.ConfigurationBlock = parseConfigurationBlock(dbBytes, ret.Header.ConfigurationBlockSize, 17 + uint32(len(ret.Header.DatabasePath)))
 	ret.Directories = parseDirectories(dbBytes, ret.Header.ConfigurationBlockSize, uint32(len(ret.Header.DatabasePath)))
 
 	return ret
