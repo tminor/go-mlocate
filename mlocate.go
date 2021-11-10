@@ -105,8 +105,8 @@ func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32
 	return *ret
 }
 
-func New(db ...[]byte) DB {
 	ret := DB{}
 
 	return ret
 }
+func New(db ...byte) DB {
