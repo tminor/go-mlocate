@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	null = "\x00"
-	magicNum = null + "mlocate"
+	NUL = "\x00"
+	magicNum = NUL + "mlocate"
 )
 
 type Header struct {
