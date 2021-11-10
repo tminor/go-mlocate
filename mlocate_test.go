@@ -67,6 +67,17 @@ func Test_parseConfigurationBlock(t *testing.T) {
 	}
 }
 
+func Test_parseDirectories(t *testing.T) {
+	configSize := mockDB().Header.ConfigurationBlockSize
+
+	want := mockDB().Directories
+	got := parseDirectories(testDBBytes, configSize, uint32(len(mockDB().Header.DatabasePath)))
+
+	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+		t.Errorf("parseDirectories() mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func Test_New(t *testing.T) {
 	want := mockDB()
 	got := New(testDBBytes)
