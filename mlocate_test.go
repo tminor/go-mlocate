@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	testDBBytes     = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00\x00\x00\x00\x00\x57\xE7\x9A\xE0\x07c\x86\x13\x00\x00\x00\x00/\x00\x00bin\x00\x01boot\x00\x02")
+	testDBBytes     = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00\x00\x00\x00\x00\x57\xE7\x9A\xE0\x07c\x86\x13\x00\x00\x00\x00/\x00\x00bin\x00\x01boot\x00\x02\x00\x00\x00\x00\x61\x8C\x1E\xB2\x07\x5B\xCD\x15\x00\x00\x00\x00/etc\x00\x00foo\x00\x01bar\x00\x02")
 	cmpOpts         = cmpopts.IgnoreUnexported(Header{}, DirEntry{}, FileEntry{})
 )
 
@@ -36,6 +36,21 @@ func mockDB() DB {
 			Files:          []FileEntry{
 				{_type: 0, Name:  "bin"},
 				{_type: 1, Name:  "boot"},
+			},
+		},
+		{
+			DirTimeSeconds: 1636572850,
+			DirTimeNanos:   123456789,
+			PathName:       "/etc",
+			Files:          []FileEntry{
+				{
+					_type: 0,
+					Name:  "foo",
+				},
+				{
+					_type: 1,
+					Name:  "bar",
+				},
 			},
 		},
 	}
