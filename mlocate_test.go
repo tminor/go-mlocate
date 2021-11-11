@@ -220,13 +220,15 @@ func Test_New(t *testing.T) {
 }
 
 var (
-	header  = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00")
-	dirs    = randDirs(1, 2)[0]
-	benchDB = dirs.toDBFormat(header...)
+	header       = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00")
+	dirs         = randDirs(1, 3)[0]
+	benchDBBytes = dirs.toDBFormat(header...)
+	benchDirs    = dirs.toDBFormat()
 )
 
 func Benchmark(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		New(benchDB...)
-	}
+	b.Run("BenchmarkParseDirectories", func(b *testing.B) {
+		benchDB := &DB{}
+		benchDB.parseDirectories(benchDBBytes, 0, 0)
+	})
 }
