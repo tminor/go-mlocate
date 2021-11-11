@@ -1,7 +1,11 @@
 package mlocate
 
 import (
+	"encoding/binary"
+	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -10,7 +14,111 @@ import (
 var (
 	testDBBytes     = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00\x00\x00\x00\x00\x57\xE7\x9A\xE0\x07c\x86\x13\x00\x00\x00\x00/\x00\x00bin\x00\x01boot\x00\x02\x00\x00\x00\x00\x61\x8C\x1E\xB2\x07\x5B\xCD\x15\x00\x00\x00\x00/etc\x00\x00foo\x00\x01bar\x00\x02")
 	cmpOpts         = cmpopts.IgnoreUnexported(Header{}, DirEntry{}, FileEntry{})
+	letters         = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 )
+
+type FileStructure struct {
+	Path           string
+	Name           string
+	Files          []FileStructure
+	DirTimeSeconds uint64
+	DirTimeNanos   uint32
+}
+
+func randStr(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func randInt(max int) int {
+	return rand.Intn(max)
+}
+
+func randFiles(n int, path ...string) []FileStructure {
+	pathPrefix := ""
+	if len(path) > 0 {
+		pathPrefix = path[0]
+	}
+
+	ret := make([]FileStructure, n)
+
+	for i := 0; i < n; i++ {
+		ret[i] = FileStructure{
+			Name:           randStr(5),
+			Path:           pathPrefix,
+			DirTimeSeconds: uint64(time.Now().Unix()),
+			DirTimeNanos:   uint32(randInt(999999999)),
+		}
+	}
+
+	return ret
+}
+
+func randDirs(n int, maxDepth int, path ...string) []FileStructure {
+	pathPrefix := "/"
+	if len(path) > 0 {
+		pathPrefix = path[0]
+	}
+
+	ret := make([]FileStructure, n)
+
+	for i := 0; i < n; i++ {
+		fs := &FileStructure{}
+		fs.Files = randFiles(2, pathPrefix)
+
+		fs.DirTimeSeconds = uint64(time.Now().Unix())
+		fs.DirTimeNanos   = uint32(randInt(999999999))
+		fs.Name           = randStr(5)
+		fs.Path           = pathPrefix
+
+		if maxDepth > 0 {
+			fs.Files = append(fs.Files, randDirs(2, maxDepth - 1, pathPrefix + fs.Name)...)
+		}
+
+		ret[i] = *fs
+	}
+
+	return ret
+}
+
+func (fs FileStructure) toDBFormat(bytes ...byte) []byte {
+	seconds  := make([]byte, 8)
+	nanos    := make([]byte, 4)
+	padding  := []byte{0, 0, 0, 0}
+	pathName := []byte(fs.Path + "/" + fs.Name + "\x00")
+
+	binary.BigEndian.PutUint64(seconds, fs.DirTimeSeconds)
+	binary.BigEndian.PutUint32(nanos, fs.DirTimeNanos)
+
+	bytes = append(bytes, seconds...)
+	bytes = append(bytes, nanos...)
+	bytes = append(bytes, padding...)
+	bytes = append(bytes, pathName...)
+
+	for _, f := range fs.Files {
+		if len(f.Files) > 0 {
+			bytes = append(bytes, 1)
+		} else {
+			bytes = append(bytes, 0)
+		}
+
+		bytes = append(bytes, []byte(f.Name)...)
+		bytes = append(bytes, 0)
+	}
+
+	bytes = append(bytes, 2)
+
+	for _, f := range fs.Files {
+		if len(f.Files) > 0 {
+			bytes = append(bytes, f.toDBFormat(bytes...)...)
+		}
+	}
+
+	return bytes
+}
 
 func mockDB() DB {
 	header := Header{
@@ -109,5 +217,20 @@ func Test_New(t *testing.T) {
 
 	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
 		t.Errorf("New() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func Benchmark(b *testing.B) {
+	header := []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00")
+
+	fs           := randDirs(1, 2)[0]
+	benchDBBytes := fs.toDBFormat(header...)
+
+	fmt.Printf("%v\n", fs)
+
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		New(benchDBBytes...)
 	}
 }
