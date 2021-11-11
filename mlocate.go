@@ -108,20 +108,17 @@ func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32
 func parseDirectories(dbBytes []byte, configBlockSize uint32, pathSize uint32) []DirEntry {
 	ret := make([]DirEntry, 0)
 
-	directories := strings.Split(string(dbBytes[16 + configBlockSize + pathSize + 3:]), "\x02")
-
-	for _, d := range directories {
-		if d == "" {
-			break
-		}
-
-		ret = append(ret, parseDirectory([]byte(d)))
+	directories := dbBytes[16 + configBlockSize + pathSize + 3:]
+	for len(directories) > 1 {
+		dir, next := parseDirectory(directories)
+		directories = directories[next:]
+		ret = append(ret, dir)
 	}
 
 	return ret
 }
 
-func parseDirectory(dir []byte) DirEntry {
+func parseDirectory(dir []byte) (DirEntry, int) {
 	ret := &DirEntry{}
 
 	pathBytes := make([]byte, 0)
@@ -136,9 +133,18 @@ func parseDirectory(dir []byte) DirEntry {
 	ret.DirTimeSeconds = binary.BigEndian.Uint64(dir[0:8])
 	ret.DirTimeNanos = binary.BigEndian.Uint32(dir[8:12])
 	ret.PathName = string(pathBytes)
-	ret.Files = parseFiles(dir[17 + len(pathBytes):])
 
-	return *ret
+	next := 0
+	for i := 17 + len(pathBytes); i < len(dir); i++ {
+		if dir[i] == 2 {
+			next = i + 1
+			break
+		}
+	}
+
+	ret.Files = parseFiles(dir[17 + len(pathBytes):next])
+
+	return *ret, next
 }
 
 func parseFiles(fBytes []byte) []FileEntry {
@@ -154,6 +160,8 @@ func parseFiles(fBytes []byte) []FileEntry {
 			}
 			ret = append(ret, fileEntry)
 			fe = make([]byte, 0)
+		} else if b == 2 {
+			break
 		} else {
 			fe = append(fe, b)
 		}
