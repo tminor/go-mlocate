@@ -28,9 +28,10 @@ type ConfigurationBlock struct {
 }
 
 type DB struct {
-	Header             Header             // The file header of the database
-	ConfigurationBlock ConfigurationBlock // Ensure databases are not reused if some configuration changes  could  affect their  contents
-	Directories        []DirEntry         // Entries describing directories and their contents
+	Header             Header               // The file header of the database
+	ConfigurationBlock ConfigurationBlock   // Ensure databases are not reused if some configuration changes  could  affect their  contents
+	Directories        []DirEntry           // Entries describing directories and their contents
+	Index              map[string]*DirEntry // DirEntries mapped by PathName
 }
 
 type DirEntry struct {
@@ -107,6 +108,7 @@ func (db *DB) parseConfigurationBlock(dbBytes []byte, blockSize uint32, startInd
 
 func (db *DB) parseDirectories(dbBytes []byte, configBlockSize uint32, pathSize uint32) {
 	directories := dbBytes[16 + configBlockSize + pathSize + 3:]
+	db.Index = make(map[string]*DirEntry)
 	for len(directories) > 1 {
 		next := db.parseDirectory(directories)
 		directories = directories[next:]
@@ -140,6 +142,7 @@ func (db *DB) parseDirectory(dir []byte) int {
 	dirEntry.parseFiles(dir[17 + len(pathBytes):next])
 
 	db.Directories = append(db.Directories, *dirEntry)
+	db.Index[dirEntry.PathName] = dirEntry
 
 	return next
 }

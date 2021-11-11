@@ -28,37 +28,44 @@ func mockDB() DB {
 		PrunePaths:      []string{"/tmp"},
 	}
 
+	dir1 := DirEntry{
+		DirTimeSeconds: 1474796256,
+		DirTimeNanos:   123962899,
+		PathName:       "/",
+		Files:          []FileEntry{
+			{_type: 0, Name:  "bin"},
+			{_type: 1, Name:  "boot"},
+		},
+	}
+	dir2 := DirEntry{
+		DirTimeSeconds: 1636572850,
+		DirTimeNanos:   123456789,
+		PathName:       "/etc",
+		Files:          []FileEntry{
+			{
+				_type: 0,
+				Name:  "foo",
+			},
+			{
+				_type: 1,
+				Name:  "bar",
+			},
+		},
+	}
+
 	directories := []DirEntry{
-		{
-			DirTimeSeconds: 1474796256,
-			DirTimeNanos:   123962899,
-			PathName:       "/",
-			Files:          []FileEntry{
-				{_type: 0, Name:  "bin"},
-				{_type: 1, Name:  "boot"},
-			},
-		},
-		{
-			DirTimeSeconds: 1636572850,
-			DirTimeNanos:   123456789,
-			PathName:       "/etc",
-			Files:          []FileEntry{
-				{
-					_type: 0,
-					Name:  "foo",
-				},
-				{
-					_type: 1,
-					Name:  "bar",
-				},
-			},
-		},
+		dir1,
+		dir2,
 	}
 
 	return DB{
 		Header:             header,
 		ConfigurationBlock: configuration,
 		Directories:        directories,
+		Index:              map[string]*DirEntry{
+			"/":    &dir1,
+			"/etc": &dir2,
+		},
 	}
 }
 
