@@ -63,10 +63,11 @@ func mockDB() DB {
 }
 
 func Test_parseHeader(t *testing.T) {
+	got := &DB{}
 	want := mockDB().Header
-	got := parseHeader(testDBBytes)
+	got.parseHeader(testDBBytes)
 
-	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+	if diff := cmp.Diff(want, got.Header, cmpOpts); diff != "" {
 		t.Errorf("parseHeader() mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -74,10 +75,11 @@ func Test_parseHeader(t *testing.T) {
 func Test_parseConfigurationBlock(t *testing.T) {
 	configSize := mockDB().Header.ConfigurationBlockSize
 
+	got := &DB{}
 	want := mockDB().ConfigurationBlock
-	got := parseConfigurationBlock(testDBBytes, configSize, 17 + uint32(len(mockDB().Header.DatabasePath)))
+	got.parseConfigurationBlock(testDBBytes, configSize, 17 + uint32(len(mockDB().Header.DatabasePath)))
 
-	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+	if diff := cmp.Diff(want, got.ConfigurationBlock, cmpOpts); diff != "" {
 		t.Errorf("parseConfigurationBlock() mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -85,10 +87,11 @@ func Test_parseConfigurationBlock(t *testing.T) {
 func Test_parseDirectories(t *testing.T) {
 	configSize := mockDB().Header.ConfigurationBlockSize
 
+	got := &DB{}
 	want := mockDB().Directories
-	got := parseDirectories(testDBBytes, configSize, uint32(len(mockDB().Header.DatabasePath)))
+	got.parseDirectories(testDBBytes, configSize, uint32(len(mockDB().Header.DatabasePath)))
 
-	if diff := cmp.Diff(want, got, cmpOpts); diff != "" {
+	if diff := cmp.Diff(want, got.Directories, cmpOpts); diff != "" {
 		t.Errorf("parseDirectories() mismatch (-want +got):\n%s", diff)
 	}
 }

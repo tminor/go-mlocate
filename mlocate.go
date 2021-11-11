@@ -59,8 +59,8 @@ func (fe *FileEntry) Type() (string, error) {
 	}
 }
 
-func parseHeader(dbBytes []byte) Header {
-	return Header{
+func (db *DB) parseHeader(dbBytes []byte) {
+	db.Header = Header{
 		MagicNumber:            string(dbBytes[:8]),
 		ConfigurationBlockSize: binary.BigEndian.Uint32(dbBytes[8:13]),
 		FileFormatVersion:      uint8(dbBytes[12]),
@@ -69,7 +69,7 @@ func parseHeader(dbBytes []byte) Header {
 	}
 }
 
-func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32) ConfigurationBlock {
+func (db *DB) parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32) {
 	configMap := make(map[string][]string)
 
 	config := strings.Split(string(dbBytes[startIndex:startIndex + blockSize]), "\x00\x00")
@@ -82,9 +82,9 @@ func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32
 		configMap[varName] = varVals
 	}
 
-	ret := &ConfigurationBlock{}
+	configBlock := &ConfigurationBlock{}
 
-	ct := reflect.TypeOf(*ret)
+	ct := reflect.TypeOf(*configBlock)
 
 	for i := 0; i < ct.NumField(); i++ {
 		field := ct.Field(i)
@@ -92,34 +92,29 @@ func parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32
 
 		switch varName {
 		case "prune_bind_mounts":
-			ret.PruneBindMounts = configMap[varName]
+			configBlock.PruneBindMounts = configMap[varName]
 		case "prunefs":
-			ret.PruneFS = configMap[varName]
+			configBlock.PruneFS = configMap[varName]
 		case "prunenames":
-			ret.PruneNames = configMap[varName]
+			configBlock.PruneNames = configMap[varName]
 		case "prunepaths":
-			ret.PrunePaths = configMap[varName]
+			configBlock.PrunePaths = configMap[varName]
 		}
 	}
 
-	return *ret
+	db.ConfigurationBlock = *configBlock
 }
 
-func parseDirectories(dbBytes []byte, configBlockSize uint32, pathSize uint32) []DirEntry {
-	ret := make([]DirEntry, 0)
-
+func (db *DB) parseDirectories(dbBytes []byte, configBlockSize uint32, pathSize uint32) {
 	directories := dbBytes[16 + configBlockSize + pathSize + 3:]
 	for len(directories) > 1 {
-		dir, next := parseDirectory(directories)
+		next := db.parseDirectory(directories)
 		directories = directories[next:]
-		ret = append(ret, dir)
 	}
-
-	return ret
 }
 
-func parseDirectory(dir []byte) (DirEntry, int) {
-	ret := &DirEntry{}
+func (db *DB) parseDirectory(dir []byte) int {
+	dirEntry := &DirEntry{}
 
 	pathBytes := make([]byte, 0)
 	for i := 16; true; i++ {
@@ -130,9 +125,9 @@ func parseDirectory(dir []byte) (DirEntry, int) {
 		}
 	}
 
-	ret.DirTimeSeconds = binary.BigEndian.Uint64(dir[0:8])
-	ret.DirTimeNanos = binary.BigEndian.Uint32(dir[8:12])
-	ret.PathName = string(pathBytes)
+	dirEntry.DirTimeSeconds = binary.BigEndian.Uint64(dir[0:8])
+	dirEntry.DirTimeNanos = binary.BigEndian.Uint32(dir[8:12])
+	dirEntry.PathName = string(pathBytes)
 
 	next := 0
 	for i := 17 + len(pathBytes); i < len(dir); i++ {
@@ -142,13 +137,15 @@ func parseDirectory(dir []byte) (DirEntry, int) {
 		}
 	}
 
-	ret.Files = parseFiles(dir[17 + len(pathBytes):next])
+	dirEntry.parseFiles(dir[17 + len(pathBytes):next])
 
-	return *ret, next
+	db.Directories = append(db.Directories, *dirEntry)
+
+	return next
 }
 
-func parseFiles(fBytes []byte) []FileEntry {
-	ret := make([]FileEntry, 0)
+func (d *DirEntry) parseFiles(fBytes []byte) {
+	files := make([]FileEntry, 0)
 	fe := make([]byte, 0)
 	for _, b := range fBytes {
 		if len(fe) == 0 {
@@ -158,7 +155,7 @@ func parseFiles(fBytes []byte) []FileEntry {
 				_type: uint(fe[0]),
 				Name:  string(fe[1:]),
 			}
-			ret = append(ret, fileEntry)
+			files = append(files, fileEntry)
 			fe = make([]byte, 0)
 		} else if b == 2 {
 			break
@@ -167,15 +164,15 @@ func parseFiles(fBytes []byte) []FileEntry {
 		}
 	}
 
-	return ret
+	d.Files = files
 }
 
 func parseParts(dbBytes []byte) DB {
 	ret := DB{}
 
-	ret.Header = parseHeader(dbBytes)
-	ret.ConfigurationBlock = parseConfigurationBlock(dbBytes, ret.Header.ConfigurationBlockSize, 17 + uint32(len(ret.Header.DatabasePath)))
-	ret.Directories = parseDirectories(dbBytes, ret.Header.ConfigurationBlockSize, uint32(len(ret.Header.DatabasePath)))
+	ret.parseHeader(dbBytes)
+	ret.parseConfigurationBlock(dbBytes, ret.Header.ConfigurationBlockSize, 17 + uint32(len(ret.Header.DatabasePath)))
+	ret.parseDirectories(dbBytes, ret.Header.ConfigurationBlockSize, uint32(len(ret.Header.DatabasePath)))
 
 	return ret
 }
