@@ -73,10 +73,10 @@ func (db *DB) parseHeader(dbBytes []byte) {
 func (db *DB) parseConfigurationBlock(dbBytes []byte, blockSize uint32, startIndex uint32) {
 	configMap := make(map[string][]string)
 
-	config := strings.Split(string(dbBytes[startIndex:startIndex + blockSize]), "\x00\x00")
+	config := strings.Split(string(dbBytes[startIndex:startIndex + blockSize]), NUL + NUL)
 
 	for i := 0; i < len(config); i++ {
-		split := strings.Split(config[i], "\x00")
+		split := strings.Split(config[i], NUL)
 		varName := split[0]
 		varVals := split[1:]
 
