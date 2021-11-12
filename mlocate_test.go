@@ -2,6 +2,7 @@ package mlocate
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -37,7 +38,7 @@ func randInt(max int) int {
 }
 
 func randFiles(n int, path ...string) []FileStructure {
-	pathPrefix := ""
+	pathPrefix := "/"
 	if len(path) > 0 {
 		pathPrefix = path[0]
 	}
@@ -56,25 +57,20 @@ func randFiles(n int, path ...string) []FileStructure {
 	return ret
 }
 
-func randDirs(n int, maxDepth int, path ...string) []FileStructure {
-	pathPrefix := "/"
-	if len(path) > 0 {
-		pathPrefix = path[0]
-	}
-
+func randDirs(n int, maxDepth int, path string) []FileStructure {
 	ret := make([]FileStructure, n)
 
 	for i := 0; i < n; i++ {
 		fs := &FileStructure{}
-		fs.Files = randFiles(2, pathPrefix)
+		fs.Files = randFiles(n, path)
 
 		fs.DirTimeSeconds = uint64(time.Now().Unix())
 		fs.DirTimeNanos   = uint32(randInt(999999999))
 		fs.Name           = randStr(5)
-		fs.Path           = pathPrefix
+		fs.Path           = path
 
 		if maxDepth > 0 {
-			fs.Files = append(fs.Files, randDirs(2, maxDepth - 1, pathPrefix + fs.Name)...)
+			fs.Files = append(fs.Files, randDirs(n, maxDepth - 1, fs.Path + fs.Name + "/")...)
 		}
 
 		ret[i] = *fs
@@ -83,11 +79,23 @@ func randDirs(n int, maxDepth int, path ...string) []FileStructure {
 	return ret
 }
 
+func generateFileStructure(files, maxDepth int) FileStructure {
+	ret := &FileStructure{}
+
+	ret.Name           = "/"
+	ret.DirTimeSeconds = uint64(time.Now().Unix())
+	ret.DirTimeNanos   = uint32(randInt(999999999))
+	ret.Path           = ""
+	ret.Files          = randDirs(files, maxDepth, "/")
+
+	return *ret
+}
+
 func (fs FileStructure) toDBFormat(bytes ...byte) []byte {
 	seconds  := make([]byte, 8)
 	nanos    := make([]byte, 4)
 	padding  := []byte{0, 0, 0, 0}
-	pathName := []byte(fs.Path + "/" + fs.Name + "\x00")
+	pathName := []byte(fs.Path + fs.Name + NUL)
 
 	binary.BigEndian.PutUint64(seconds, fs.DirTimeSeconds)
 	binary.BigEndian.PutUint32(nanos, fs.DirTimeNanos)
@@ -112,7 +120,7 @@ func (fs FileStructure) toDBFormat(bytes ...byte) []byte {
 
 	for _, f := range fs.Files {
 		if len(f.Files) > 0 {
-			bytes = append(bytes, f.toDBFormat(bytes...)...)
+			bytes = append(bytes, f.toDBFormat()...)
 		}
 	}
 
@@ -221,7 +229,7 @@ func Test_New(t *testing.T) {
 
 var (
 	header       = []byte("\x00mlocate\x00\x00\x00\x4E\x00\x01\x00\x00/\x00prune_bind_mounts\x001\x00\x00prunefs\x009P\x00AFS\x00\x00prunenames\x00.git\x00.hg\x00.svn\x00\x00prunepaths\x00/tmp\x00\x00")
-	dirs         = randDirs(1, 3)[0]
+	dirs         = generateFileStructure(4, 8)
 	benchDBBytes = dirs.toDBFormat(header...)
 	benchDirs    = dirs.toDBFormat()
 )
@@ -230,5 +238,6 @@ func Benchmark(b *testing.B) {
 	b.Run("BenchmarkParseDirectories", func(b *testing.B) {
 		benchDB := &DB{}
 		benchDB.parseDirectories(benchDBBytes, 0, 0)
+		fmt.Printf("%d directories parsed\n", len(benchDB.Directories))
 	})
 }
